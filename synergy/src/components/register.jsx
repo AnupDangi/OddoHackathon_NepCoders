@@ -1,7 +1,11 @@
 import React, { useState } from "react";
+import { useNavigate, Link } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 import "../App.css";
 
-const RegisterForm = ({ onLoginClick }) => {
+const RegisterForm = () => {
+  const navigate = useNavigate();
+  const { register } = useAuth();
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
@@ -9,6 +13,7 @@ const RegisterForm = ({ onLoginClick }) => {
     password: "",
     agreeToTerms: false,
   });
+  const [error, setError] = useState("");
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -18,9 +23,23 @@ const RegisterForm = ({ onLoginClick }) => {
     }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log("Form submitted:", formData);
+    if (!formData.agreeToTerms) {
+      setError("Please agree to the terms and conditions");
+      return;
+    }
+    try {
+      await register(
+        formData.email,
+        formData.password,
+        formData.firstName,
+        formData.lastName
+      );
+      navigate("/"); // Redirect to projects page after successful registration
+    } catch (err) {
+      setError(err.message);
+    }
   };
 
   return (
