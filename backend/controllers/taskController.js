@@ -1,4 +1,5 @@
 import { supabaseAdmin } from '../config/supabase.js';
+import { createNotification, notificationHelpers } from './notificationController.js';
 
 // Get all tasks for the user
 export const getTasks = async (req, res, next) => {
@@ -127,6 +128,35 @@ export const createTask = async (req, res, next) => {
       });
     }
 
+    // Create notification if task is assigned to someone else
+    if (assignee && assignee !== userId) {
+      try {
+        const { data: assignerProfile } = await supabaseAdmin
+          .from('profiles')
+          .select('first_name, last_name')
+          .eq('id', userId)
+          .single();
+
+        const assignerName = assignerProfile 
+          ? `${assignerProfile.first_name} ${assignerProfile.last_name}`
+          : 'Someone';
+
+        const notification = notificationHelpers.taskAssigned(
+          assignee,
+          project_id,
+          task.id,
+          name,
+          assignerName,
+          task.projects.name
+        );
+
+        await createNotification(notification);
+      } catch (notificationError) {
+        console.error('Failed to create notification:', notificationError);
+        // Don't fail the task creation if notification fails
+      }
+    }
+
     res.status(201).json({
       success: true,
       message: 'Task created successfully',
@@ -202,6 +232,49 @@ export const updateTask = async (req, res, next) => {
         error: true,
         message: error.message
       });
+    }
+
+    // Create notifications for relevant changes
+    try {
+      const { data: updaterProfile } = await supabaseAdmin
+        .from('profiles')
+        .select('first_name, last_name')
+        .eq('id', userId)
+        .single();
+
+      const updaterName = updaterProfile 
+        ? `${updaterProfile.first_name} ${updaterProfile.last_name}`
+        : 'Someone';
+
+      // Status change notification
+      if (status && status !== task.status && task.assignee !== userId) {
+        const notification = notificationHelpers.taskStatusChanged(
+          task.assignee,
+          task.project_id,
+          task.id,
+          task.name,
+          task.status,
+          status,
+          updaterName
+        );
+        await createNotification(notification);
+      }
+
+      // Task reassignment notification
+      if (assignee && assignee !== task.assignee && assignee !== userId) {
+        const notification = notificationHelpers.taskAssigned(
+          assignee,
+          task.project_id,
+          task.id,
+          updatedTask.name,
+          updaterName,
+          updatedTask.projects.name
+        );
+        await createNotification(notification);
+      }
+    } catch (notificationError) {
+      console.error('Failed to create notification:', notificationError);
+      // Don't fail the task update if notification fails
     }
 
     res.json({

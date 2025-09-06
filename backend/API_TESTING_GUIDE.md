@@ -260,6 +260,59 @@ curl -X GET http://localhost:5000/api/v1/dashboard/stats \
   -H "Authorization: Bearer YOUR_JWT_TOKEN"
 ```
 
+## 🔔 Notifications Testing
+
+### Get All Notifications
+```bash
+curl -X GET http://localhost:5000/api/v1/notifications/ \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN"
+```
+
+### Get Notifications with Filters
+```bash
+# Get only unread notifications
+curl -X GET "http://localhost:5000/api/v1/notifications/?unread_only=true" \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN"
+
+# Get notifications by type
+curl -X GET "http://localhost:5000/api/v1/notifications/?type=task_assigned" \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN"
+
+# Paginated notifications
+curl -X GET "http://localhost:5000/api/v1/notifications/?limit=10&offset=0" \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN"
+```
+
+### Get Unread Notification Count
+```bash
+curl -X GET http://localhost:5000/api/v1/notifications/unread-count \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN"
+```
+
+### Mark Notification as Read
+```bash
+curl -X PUT http://localhost:5000/api/v1/notifications/NOTIFICATION_ID/read \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN"
+```
+
+### Mark All Notifications as Read
+```bash
+curl -X PUT http://localhost:5000/api/v1/notifications/read-all \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN"
+```
+
+### Delete Notification
+```bash
+curl -X DELETE http://localhost:5000/api/v1/notifications/NOTIFICATION_ID \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN"
+```
+
+### Delete All Read Notifications
+```bash
+curl -X DELETE http://localhost:5000/api/v1/notifications/read \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN"
+```
+
 ## 🔧 Error Testing
 
 ### Test Invalid Routes
@@ -301,9 +354,10 @@ curl -X GET http://localhost:5000/api/v1/projects/NONEXISTENT_PROJECT_ID \
 6. **Create Tasks** → Add tasks to projects
 7. **Get Tasks** → Verify task creation
 8. **Update Tasks** → Change status to "Done"
-9. **Get Dashboard** → View aggregated data
-10. **Test User Profile** → Update profile info
-11. **Test Delete Operations** → Clean up test data
+9. **Check Notifications** → View generated notifications
+10. **Get Dashboard** → View aggregated data
+11. **Test User Profile** → Update profile info
+12. **Test Delete Operations** → Clean up test data
 
 ## 🚨 Expected Response Formats
 
@@ -353,7 +407,42 @@ curl -X GET http://localhost:5000/api/v1/projects/NONEXISTENT_PROJECT_ID \
 }
 ```
 
-### Task Response Example
+### Notification Response Example
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": "notif-id-123",
+      "user_id": "user-id-456",
+      "project_id": "project-id-789",
+      "task_id": "task-id-101",
+      "type": "task_assigned",
+      "title": "New Task Assigned",
+      "message": "You have been assigned to task: Implement Authentication",
+      "is_read": false,
+      "metadata": {
+        "task_name": "Implement Authentication",
+        "project_name": "E-Commerce App",
+        "assigned_by": "John Doe"
+      },
+      "created_at": "2024-09-06T...",
+      "projects": {
+        "name": "E-Commerce App",
+        "image": "https://example.com/project.jpg"
+      },
+      "tasks": {
+        "name": "Implement Authentication"
+      }
+    }
+  ],
+  "pagination": {
+    "limit": 20,
+    "offset": 0,
+    "total": 1
+  }
+}
+```
 ```json
 {
   "success": true,

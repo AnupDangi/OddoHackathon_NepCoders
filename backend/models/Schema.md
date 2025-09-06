@@ -43,3 +43,22 @@ create table tasks (
   status text default 'To-Do' check (status in ('To-Do','In Progress','Done')),
   created_at timestamp default now()
 );
+
+-- NOTIFICATIONS
+create table notifications (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid references profiles(id) on delete cascade,
+  project_id uuid references projects(id) on delete cascade,
+  task_id uuid references tasks(id) on delete cascade, -- optional, for task-specific notifications
+  type text not null, -- 'task_assigned', 'project_update', 'task_completed', 'project_invitation', 'deadline_reminder'
+  message text not null,
+  title text, -- optional title for the notification
+  is_read boolean default false,
+  metadata jsonb, -- additional data like old_status, new_status, etc.
+  created_at timestamp default now()
+);
+
+-- Indexes for better performance
+create index idx_notifications_user_id on notifications(user_id);
+create index idx_notifications_created_at on notifications(created_at desc);
+create index idx_notifications_is_read on notifications(is_read);

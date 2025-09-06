@@ -1,4 +1,5 @@
 import { supabaseAdmin } from '../config/supabase.js';
+import { createNotification, notificationHelpers } from './notificationController.js';
 
 // Get all projects for the user
 export const getProjects = async (req, res, next) => {
@@ -326,6 +327,38 @@ export const addMember = async (req, res, next) => {
         error: true,
         message: error.message
       });
+    }
+
+    // Create notification for new member
+    try {
+      const { data: projectData } = await supabaseAdmin
+        .from('projects')
+        .select('name')
+        .eq('id', id)
+        .single();
+
+      const { data: inviterProfile } = await supabaseAdmin
+        .from('profiles')
+        .select('first_name, last_name')
+        .eq('id', currentUserId)
+        .single();
+
+      const inviterName = inviterProfile 
+        ? `${inviterProfile.first_name} ${inviterProfile.last_name}`
+        : 'Someone';
+
+      const notification = notificationHelpers.projectInvitation(
+        newMemberId,
+        id,
+        projectData?.name || 'Project',
+        inviterName,
+        role
+      );
+
+      await createNotification(notification);
+    } catch (notificationError) {
+      console.error('Failed to create notification:', notificationError);
+      // Don't fail the member addition if notification fails
     }
 
     res.status(201).json({
