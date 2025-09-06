@@ -1,6 +1,6 @@
 import React from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { AuthProvider, useAuth } from "./context/AuthContext";
+import { AuthProvider, useAuth } from "./context/AuthContext.jsx";
 import RegisterForm from "./components/register.jsx";
 import LoginForm from "./components/login.jsx";
 import ProjectPage from "./components/project.jsx";

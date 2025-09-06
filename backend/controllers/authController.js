@@ -44,6 +44,8 @@ export const signup = async (req, res, next) => {
       success: true,
       message: 'User registered successfully',
       data: {
+        access_token: authData.session?.access_token,
+        refresh_token: authData.session?.refresh_token,
         user: authData.user,
         needsVerification: !authData.user?.email_confirmed_at
       }
@@ -81,8 +83,9 @@ export const login = async (req, res, next) => {
       success: true,
       message: 'Login successful',
       data: {
+        access_token: data.session.access_token,
+        refresh_token: data.session.refresh_token,
         user: data.user,
-        session: data.session,
         profile
       }
     });
@@ -133,8 +136,10 @@ export const getMe = async (req, res, next) => {
     res.json({
       success: true,
       data: {
-        user: req.user,
-        profile
+        ...req.user,
+        ...profile,
+        first_name: profile?.first_name || req.user.user_metadata?.first_name,
+        last_name: profile?.last_name || req.user.user_metadata?.last_name
       }
     });
   } catch (error) {

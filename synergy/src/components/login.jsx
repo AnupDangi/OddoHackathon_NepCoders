@@ -34,7 +34,7 @@ const LoginForm = () => {
     <div className="login-root">
       {/* Header */}
       <header className="login-header">
-        <h1 className="login-header-title">Title of the Project</h1>
+        <h1 className="login-header-title">SynergySphere </h1>
         <nav className="login-header-nav">
           <button>Home</button>
           <button>Solutions</button>
