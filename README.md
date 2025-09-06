@@ -313,11 +313,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - Express.js for the robust backend framework
 - All contributors and testers
 
-## 📞 Support
-
-For support, email support@synergysphere.com or create an issue in this repository.
-
----
 
 **SynergySphere** - Where teams thrive together 🚀
 
