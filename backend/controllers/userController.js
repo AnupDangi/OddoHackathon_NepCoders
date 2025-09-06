@@ -71,7 +71,7 @@ export const getAllUsers = async (req, res, next) => {
     
     let query = supabaseAdmin
       .from('profiles')
-      .select('id, first_name, last_name, avatar_url')
+      .select('id, first_name, last_name')
       .order('first_name');
 
     // Add search filter if provided
@@ -138,7 +138,7 @@ export const searchUsersByEmail = async (req, res, next) => {
 
     const { data: profiles, error: profileError } = await supabaseAdmin
       .from('profiles')
-      .select('id, first_name, last_name, avatar_url')
+      .select('id, first_name, last_name')
       .in('id', userIds);
 
     if (profileError) {
@@ -157,7 +157,7 @@ export const searchUsersByEmail = async (req, res, next) => {
         email: authUser.email,
         first_name: profile?.first_name || '',
         last_name: profile?.last_name || '',
-        avatar_url: profile?.avatar_url || null,
+        avatar_url: null, // Will be generated on frontend
         full_name: profile ? `${profile.first_name} ${profile.last_name}` : authUser.email
       };
     });
@@ -178,7 +178,7 @@ export const getUserById = async (req, res, next) => {
 
     const { data: profile, error } = await supabaseAdmin
       .from('profiles')
-      .select('id, first_name, last_name, avatar_url')
+      .select('id, first_name, last_name')
       .eq('id', id)
       .single();
 

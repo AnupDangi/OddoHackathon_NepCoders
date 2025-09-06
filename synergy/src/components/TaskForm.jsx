@@ -43,7 +43,8 @@ export const NewTaskForm = ({ onSubmit, projects = [], currentProject }) => {
         project_id: formData.project_id || currentProject?.id,
         deadline: formData.deadline || null,
         status: formData.status,
-        assignee: formData.assignee.trim() || null,
+        // Don't send assignee if it's just a name - backend will default to current user
+        // TODO: Implement user search to convert name to user ID
         tags: formData.tags.split(',').map(tag => tag.trim()).filter(tag => tag),
         image: formData.image || null
       };
@@ -85,14 +86,16 @@ export const NewTaskForm = ({ onSubmit, projects = [], currentProject }) => {
             Assignee
           </label>
           <div className="input-wrapper">
-            <input
+            <select 
               id="assignee"
               name="assignee"
-              className="text-input"
-              placeholder="Enter assignee email or name"
+              className="select-input"
               value={formData.assignee}
               onChange={handleChange}
-            />
+            >
+              <option value="">Assign to me (default)</option>
+              {/* TODO: Load project members here */}
+            </select>
           </div>
         </div>
 

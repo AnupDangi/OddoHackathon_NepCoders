@@ -461,8 +461,7 @@ export const getProjectMembers = async (req, res, next) => {
         profiles(
           id,
           first_name,
-          last_name,
-          avatar_url
+          last_name
         )
       `)
       .eq('project_id', projectId)
@@ -495,7 +494,7 @@ export const getProjectMembers = async (req, res, next) => {
       email: emailMap[member.user_id] || '',
       first_name: member.profiles.first_name,
       last_name: member.profiles.last_name,
-      avatar_url: member.profiles.avatar_url,
+      avatar_url: null, // Will be generated on frontend using ui-avatars
       role: member.role,
       full_name: `${member.profiles.first_name} ${member.profiles.last_name}`
     }));
