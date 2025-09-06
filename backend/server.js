@@ -1,14 +1,79 @@
 import express from 'express';
-import bodyParser from 'body-parser';
 import cors from 'cors';
+import bodyParser from 'body-parser';
+import dotenv from 'dotenv';
+import { testConnection } from './config/supabase.js';
+
+// Import middlewares
+import errorHandler from './middlewares/errorHandler.js';
+
+// Import API v1.0 routes
+import authRoutes from './routes/api/v1/auth.js';
+import projectRoutes from './routes/api/v1/projects.js';
+import taskRoutes from './routes/api/v1/tasks.js';
+import userRoutes from './routes/api/v1/users.js';
+import dashboardRoutes from './routes/api/v1/dashboard.js';
+import notificationRoutes from './routes/api/v1/notifications.js';
+
+dotenv.config();
 
 const app = express();
+const PORT = process.env.PORT || 5000;
+
+// Middleware
 app.use(cors());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
-const PORT = process.env.PORT || 5001;
-
-app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
+// Health check endpoint
+app.get('/', (req, res) => {
+  res.json({ 
+    message: 'SynergySphere API v1.0', 
+    status: 'active',
+    timestamp: new Date().toISOString()
+  });
 });
+
+// API v1.0 Routes
+app.use('/api/v1/auth', authRoutes);
+app.use('/api/v1/projects', projectRoutes);
+app.use('/api/v1/tasks', taskRoutes);
+app.use('/api/v1/users', userRoutes);
+app.use('/api/v1/dashboard', dashboardRoutes);
+app.use('/api/v1/notifications', notificationRoutes);
+
+// Error handling middleware (should be last)
+app.use(errorHandler);
+
+// 404 handler
+app.use((req, res) => {
+  res.status(404).json({
+    error: 'Route not found',
+    message: `The endpoint ${req.method} ${req.originalUrl} does not exist`
+  });
+});
+
+// Start server
+const startServer = async () => {
+  try {
+    // Test Supabase connection
+    const isConnected = await testConnection();
+    if (!isConnected) {
+      console.error('Failed to connect to Supabase. Please check your configuration.');
+      process.exit(1);
+    }
+
+    app.listen(PORT, () => {
+      console.log(`🚀 Server running on port ${PORT}`);
+      console.log(`📖 API Documentation: http://localhost:${PORT}/api/v1`);
+      console.log(`🔍 Health Check: http://localhost:${PORT}/`);
+    });
+  } catch (error) {
+    console.error('Failed to start server:', error.message);
+    process.exit(1);
+  }
+};
+
+startServer();
+
+export default app;
