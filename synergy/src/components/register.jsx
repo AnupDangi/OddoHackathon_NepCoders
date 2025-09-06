@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import "../App.css";
 
-const RegisterForm = () => {
+const RegisterForm = ({ onLoginClick }) => {
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
@@ -27,7 +27,7 @@ const RegisterForm = () => {
     <div className="app-root">
       {/* Header */}
       <header className="header">
-        <h1 className="header-title">Title of the Project</h1>
+        <h1 className="header-title">NMITxODDO</h1>
         <nav className="header-nav">
           <button>Home</button>
           <button>Solutions</button>
@@ -43,7 +43,21 @@ const RegisterForm = () => {
         <form className="form-container" onSubmit={handleSubmit}>
           <div className="form-header">
             <h2>Create an account</h2>
-            <a href="/login">log in instead</a>
+            <button
+              type="button"
+              className="form-link"
+              onClick={onLoginClick}
+              style={{
+                background: "none",
+                border: "none",
+                color: "#2563eb",
+                cursor: "pointer",
+                fontSize: "0.875rem",
+                textDecoration: "underline",
+              }}
+            >
+              log in instead
+            </button>
           </div>
 
           <input
