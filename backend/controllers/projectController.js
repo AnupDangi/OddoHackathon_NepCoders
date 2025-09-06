@@ -431,6 +431,155 @@ export const removeMember = async (req, res, next) => {
   }
 };
 
+// Get project members
+export const getProjectMembers = async (req, res, next) => {
+  try {
+    const { id: projectId } = req.params;
+    const userId = req.user.id;
+
+    // Check if user is a member of the project
+    const { data: membership } = await supabaseAdmin
+      .from('project_members')
+      .select('role')
+      .eq('project_id', projectId)
+      .eq('user_id', userId)
+      .single();
+
+    if (!membership) {
+      return res.status(403).json({
+        error: true,
+        message: 'You are not a member of this project'
+      });
+    }
+
+    // Get all project members
+    const { data: members, error } = await supabaseAdmin
+      .from('project_members')
+      .select(`
+        user_id,
+        role,
+        profiles(
+          id,
+          first_name,
+          last_name,
+          avatar_url
+        )
+      `)
+      .eq('project_id', projectId)
+      .order('role', { ascending: true }); // Managers first
+
+    if (error) {
+      console.error('Error fetching project members:', error);
+      return res.status(400).json({
+        error: true,
+        message: error.message
+      });
+    }
+
+    // Get emails from auth.users for each member
+    const userIds = members.map(member => member.user_id);
+    const { data: authUsers, error: authError } = await supabaseAdmin.auth.admin.listUsers();
+    
+    const emailMap = {};
+    if (authUsers && authUsers.users) {
+      authUsers.users.forEach(user => {
+        if (userIds.includes(user.id)) {
+          emailMap[user.id] = user.email;
+        }
+      });
+    }
+
+    // Format response
+    const formattedMembers = (members || []).map(member => ({
+      id: member.profiles.id,
+      email: emailMap[member.user_id] || '',
+      first_name: member.profiles.first_name,
+      last_name: member.profiles.last_name,
+      avatar_url: member.profiles.avatar_url,
+      role: member.role,
+      full_name: `${member.profiles.first_name} ${member.profiles.last_name}`
+    }));
+
+    res.json({
+      success: true,
+      data: formattedMembers
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// Update member role
+export const updateMemberRole = async (req, res, next) => {
+  try {
+    const { id: projectId, userId: targetUserId } = req.params;
+    const { role } = req.body;
+    const currentUserId = req.user.id;
+
+    // Validate role
+    if (!['member', 'manager'].includes(role)) {
+      return res.status(400).json({
+        error: true,
+        message: 'Invalid role. Must be "member" or "manager"'
+      });
+    }
+
+    // Check if current user is project manager
+    const { data: project } = await supabaseAdmin
+      .from('projects')
+      .select('project_manager')
+      .eq('id', projectId)
+      .single();
+
+    if (!project || project.project_manager !== currentUserId) {
+      return res.status(403).json({
+        error: true,
+        message: 'Only project managers can update member roles'
+      });
+    }
+
+    // Cannot change project manager's role
+    if (project.project_manager === targetUserId) {
+      return res.status(400).json({
+        error: true,
+        message: 'Cannot change project manager role'
+      });
+    }
+
+    // Update member role
+    const { data, error } = await supabaseAdmin
+      .from('project_members')
+      .update({ role })
+      .eq('project_id', projectId)
+      .eq('user_id', targetUserId)
+      .select(`
+        role,
+        profiles(first_name, last_name)
+      `)
+      .single();
+
+    if (error) {
+      console.error('Error updating member role:', error);
+      return res.status(400).json({
+        error: true,
+        message: error.message
+      });
+    }
+
+    res.json({
+      success: true,
+      message: 'Member role updated successfully',
+      data: {
+        user_id: targetUserId,
+        role: data.role,
+        member_name: `${data.profiles.first_name} ${data.profiles.last_name}`
+      }
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 export default {
   getProjects,
   getProjectById,
@@ -438,5 +587,7 @@ export default {
   updateProject,
   deleteProject,
   addMember,
-  removeMember
+  removeMember,
+  getProjectMembers,
+  updateMemberRole
 };

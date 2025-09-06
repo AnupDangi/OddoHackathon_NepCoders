@@ -3,11 +3,11 @@ import React, { useState } from 'react';
 import { Upload } from 'lucide-react';
 import './TaskForm.css';
 
-export const NewTaskForm = ({ onSubmit, projects = [] }) => {
+export const NewTaskForm = ({ onSubmit, projects = [], currentProject }) => {
   const [formData, setFormData] = useState({
     name: '',
     assignee: '',
-    project_id: '',
+    project_id: currentProject?.id || '',
     tags: '',
     deadline: '',
     image: '',
@@ -23,26 +23,36 @@ export const NewTaskForm = ({ onSubmit, projects = [] }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    // Validation
     if (!formData.name || !formData.description) {
-      alert('Please fill in required fields');
+      alert('Please fill in required fields: Name and Description');
+      return;
+    }
+    
+    if (!formData.project_id && !currentProject?.id) {
+      alert('Please select a project');
       return;
     }
 
     setIsSubmitting(true);
     try {
       const taskData = {
-        name: formData.name,
-        description: formData.description,
-        project_id: formData.project_id || null,
+        name: formData.name.trim(),
+        description: formData.description.trim(),
+        project_id: formData.project_id || currentProject?.id,
         deadline: formData.deadline || null,
         status: formData.status,
+        assignee: formData.assignee.trim() || null,
         tags: formData.tags.split(',').map(tag => tag.trim()).filter(tag => tag),
         image: formData.image || null
       };
       
+      console.log('Submitting task data:', taskData); // Debug log
       await onSubmit(taskData);
     } catch (error) {
       console.error('Error submitting form:', error);
+      alert(`Error creating task: ${error.message}`);
     } finally {
       setIsSubmitting(false);
     }
@@ -89,23 +99,35 @@ export const NewTaskForm = ({ onSubmit, projects = [] }) => {
         {/* Project Field */}
         <div className="field-group">
           <label htmlFor="project_id" className="field-label">
-            Project
+            Project *
           </label>
           <div className="input-wrapper">
-            <select 
-              id="project_id"
-              name="project_id"
-              className="select-input"
-              value={formData.project_id}
-              onChange={handleChange}
-            >
-              <option value="">Select a project</option>
-              {projects.map(project => (
-                <option key={project.id} value={project.id}>
-                  {project.name}
-                </option>
-              ))}
-            </select>
+            {currentProject ? (
+              <input
+                id="project_id"
+                name="project_id"
+                className="text-input"
+                value={currentProject.name}
+                disabled
+                style={{ backgroundColor: 'var(--bg-tertiary)', cursor: 'not-allowed' }}
+              />
+            ) : (
+              <select 
+                id="project_id"
+                name="project_id"
+                className="select-input"
+                value={formData.project_id}
+                onChange={handleChange}
+                required
+              >
+                <option value="">Select a project</option>
+                {projects.map(project => (
+                  <option key={project.id} value={project.id}>
+                    {project.name}
+                  </option>
+                ))}
+              </select>
+            )}
           </div>
         </div>
 

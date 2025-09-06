@@ -206,3 +206,90 @@ export const notificationsAPI = {
     });
   },
 };
+
+// Project Members API functions
+export const membersAPI = {
+  // Get project members
+  getProjectMembers: async (projectId) => {
+    return apiRequest(`/projects/${projectId}/members`);
+  },
+
+  // Add member to project (direct - not via invitation)
+  addMember: async (projectId, memberData) => {
+    return apiRequest(`/projects/${projectId}/members`, {
+      method: 'POST',
+      body: JSON.stringify(memberData),
+    });
+  },
+
+  // Update member role
+  updateMemberRole: async (projectId, userId, role) => {
+    return apiRequest(`/projects/${projectId}/members/${userId}`, {
+      method: 'PUT',
+      body: JSON.stringify({ role }),
+    });
+  },
+
+  // Remove member from project
+  removeMember: async (projectId, userId) => {
+    return apiRequest(`/projects/${projectId}/members/${userId}`, {
+      method: 'DELETE',
+    });
+  },
+};
+
+// Invitations API functions
+export const invitationsAPI = {
+  // Send invitation
+  sendInvitation: async (projectId, invitationData) => {
+    return apiRequest(`/invitations/projects/${projectId}/invite`, {
+      method: 'POST',
+      body: JSON.stringify(invitationData),
+    });
+  },
+
+  // Get project invitations
+  getProjectInvitations: async (projectId) => {
+    return apiRequest(`/invitations/projects/${projectId}/invitations`);
+  },
+
+  // Cancel invitation
+  cancelInvitation: async (projectId, invitationId) => {
+    return apiRequest(`/invitations/projects/${projectId}/invitations/${invitationId}`, {
+      method: 'DELETE',
+    });
+  },
+
+  // Accept invitation
+  acceptInvitation: async (token) => {
+    return apiRequest(`/invitations/${token}/accept`, {
+      method: 'PUT',
+    });
+  },
+
+  // Decline invitation
+  declineInvitation: async (token) => {
+    return apiRequest(`/invitations/${token}/decline`, {
+      method: 'PUT',
+    });
+  },
+};
+
+// Enhanced Users API functions
+export const enhancedUsersAPI = {
+  // Search users by email
+  searchByEmail: async (email) => {
+    return apiRequest(`/users/search?email=${encodeURIComponent(email)}`);
+  },
+
+  // Get user by ID
+  getUserById: async (userId) => {
+    return apiRequest(`/users/${userId}`);
+  },
+
+  // Get all users with search
+  getAll: async (search = '') => {
+    const queryParam = search ? `?search=${encodeURIComponent(search)}` : '';
+    return apiRequest(`/users/all${queryParam}`);
+  },
+};

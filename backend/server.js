@@ -14,6 +14,7 @@ import taskRoutes from './routes/api/v1/tasks.js';
 import userRoutes from './routes/api/v1/users.js';
 import dashboardRoutes from './routes/api/v1/dashboard.js';
 import notificationRoutes from './routes/api/v1/notifications.js';
+import invitationRoutes from './routes/api/v1/invitations.js';
 
 dotenv.config();
 
@@ -47,6 +48,7 @@ app.use('/api/v1/tasks', taskRoutes);
 app.use('/api/v1/users', userRoutes);
 app.use('/api/v1/dashboard', dashboardRoutes);
 app.use('/api/v1/notifications', notificationRoutes);
+app.use('/api/v1/invitations', invitationRoutes);
 
 // Error handling middleware (should be last)
 app.use(errorHandler);

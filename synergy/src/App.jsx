@@ -35,6 +35,30 @@ function App() {
               </ProtectedRoute>
             } 
           />
+          <Route 
+            path="/projects" 
+            element={
+              <ProtectedRoute>
+                <ProjectPage />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/projects/:projectId" 
+            element={
+              <ProtectedRoute>
+                <ProjectPage />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/my-tasks" 
+            element={
+              <ProtectedRoute>
+                <ProjectPage />
+              </ProtectedRoute>
+            } 
+          />
         </Routes>
       </BrowserRouter>
     </AuthProvider>

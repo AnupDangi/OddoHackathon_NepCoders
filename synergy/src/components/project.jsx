@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { projectsAPI, tasksAPI } from '../api/api';
 import NewProjectForm from './ProjectForm';
 import NewTaskForm from './TaskForm';
+import NotificationsBell from './Notifications';
+import MemberManagement from './MemberManagement';
 import './App.css';
 
 // --- SVG Icon Components ---
@@ -14,6 +16,7 @@ const Icon = ({ path, className = "w-5 h-5" }) => (
 );
 const CompanyLogo = () => <svg className="sidebar-header-logo" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M3.75 21h16.5M4.5 3h15M5.25 3v18m13.5-18v18M9 6.75h6.375a1.125 1.125 0 011.125 1.125v1.125a1.125 1.125 0 01-1.125 1.125H9v-3.375z" /></svg>;
 const FolderIcon = () => <Icon path="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" />;
+const UsersIcon = () => <Icon path="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z" />;
 const TasksIcon = () => <Icon path="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />;
 const SunIcon = () => <Icon path="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" />;
 const MoonIcon = () => <Icon path="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z" />;
@@ -54,12 +57,17 @@ const ProjectCreationModal = ({ isOpen, onClose, onCreateProject }) => {
     );
 };
 
-const TaskCreationModal = ({ isOpen, onClose, onCreateTask, projects }) => {
+const TaskCreationModal = ({ isOpen, onClose, onCreateTask, projects, currentProject }) => {
     if (!isOpen) return null;
 
     const handleSubmit = async (formData) => {
         try {
-            await onCreateTask(formData);
+            // If we're in a project detail view, automatically set the project_id
+            const taskData = {
+                ...formData,
+                project_id: currentProject?.id || formData.project_id
+            };
+            await onCreateTask(taskData);
             onClose();
         } catch (error) {
             console.error('Error creating task:', error);
@@ -76,14 +84,14 @@ const TaskCreationModal = ({ isOpen, onClose, onCreateTask, projects }) => {
                     </button>
                 </div>
                 <div className="modal-body">
-                    <NewTaskForm onSubmit={handleSubmit} projects={projects} />
+                    <NewTaskForm onSubmit={handleSubmit} projects={projects} currentProject={currentProject} />
                 </div>
             </div>
         </div>
     );
 };
 
-const Sidebar = ({ isCollapsed, theme, toggleTheme, onLogout, user, currentPage, onNavigate }) => {
+const Sidebar = ({ isCollapsed, theme, toggleTheme, onLogout, user, currentPage, onNavigate, showBackButton, onBack }) => {
     const handleLogoutClick = async () => {
         try {
             await onLogout();
@@ -99,11 +107,19 @@ const Sidebar = ({ isCollapsed, theme, toggleTheme, onLogout, user, currentPage,
                 <span className="sidebar-header-text">SynergySphere</span>
             </div>
             <nav className="sidebar-nav">
+                {showBackButton && (
+                    <button onClick={onBack} className="nav-link back-button">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" style={{ width: '20px', height: '20px' }}>
+                            <path fillRule="evenodd" d="M12.79 5.23a.75.75 0 01-.02 1.06L8.832 10l3.938 3.71a.75.75 0 11-1.04 1.08l-4.5-4.25a.75.75 0 010-1.08l4.5-4.25a.75.75 0 011.06.02z" clipRule="evenodd" />
+                        </svg>
+                        <span className="nav-link-text">Back</span>
+                    </button>
+                )}
                 <button onClick={() => onNavigate('projects')} className={`nav-link ${currentPage === 'projects' ? 'active' : ''}`}>
                     <FolderIcon />
                     <span className="nav-link-text">Projects</span>
                 </button>
-                <button onClick={() => onNavigate('tasks')} className={`nav-link ${currentPage === 'tasks' ? 'active' : ''}`}>
+                <button onClick={() => onNavigate('my-tasks')} className={`nav-link ${currentPage === 'my-tasks' ? 'active' : ''}`}>
                     <TasksIcon />
                     <span className="nav-link-text">My Tasks</span>
                 </button>
@@ -238,14 +254,18 @@ const TaskCard = ({ task }) => {
 const MainContent = ({ 
     currentPage, 
     projects, 
-    tasks, 
+    tasks,
+    currentProject,
     isLoading, 
     error, 
     onNewProject,
     onNewTask,
     onProjectClick, 
     searchQuery, 
-    onSearchChange 
+    onSearchChange,
+    isProjectDetailView,
+    isMyTasksView,
+    user
 }) => {
     const filteredProjects = projects.filter(project =>
         project.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -256,6 +276,8 @@ const MainContent = ({
         task.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         task.description?.toLowerCase().includes(searchQuery.toLowerCase())
     );
+
+    const [activeTab, setActiveTab] = React.useState('tasks');
 
     if (error) {
         return (
@@ -272,26 +294,32 @@ const MainContent = ({
         <div className="main-content">
             <header className="main-header">
                 <div className="breadcrumbs">
-                    &gt; {currentPage === 'projects' ? 'Projects' : 'My Tasks'}
+                    {isProjectDetailView ? (
+                        <span>&gt; Projects &gt; {currentProject?.name || 'Project Details'}</span>
+                    ) : isMyTasksView ? (
+                        <span>&gt; My Tasks</span>
+                    ) : (
+                        <span>&gt; Projects</span>
+                    )}
                 </div>
                 <div className="search-bar">
                     <span className="search-icon"><SearchIcon /></span>
                     <input 
                         type="text" 
-                        placeholder="Search..." 
+                        placeholder={isProjectDetailView || isMyTasksView ? "Search tasks..." : "Search projects..."} 
                         value={searchQuery}
                         onChange={(e) => onSearchChange(e.target.value)}
                     />
                 </div>
                 <div className="header-actions">
-                    <button className="btn btn-secondary">[...]</button>
-                    {currentPage === 'projects' ? (
-                        <button className="btn btn-primary" onClick={onNewProject}>
-                            <PlusIcon /> New Project
-                        </button>
-                    ) : (
+                    <NotificationsBell />
+                    {isProjectDetailView || isMyTasksView ? (
                         <button className="btn btn-primary" onClick={onNewTask}>
                             <PlusIcon /> New Task
+                        </button>
+                    ) : (
+                        <button className="btn btn-primary" onClick={onNewProject}>
+                            <PlusIcon /> New Project
                         </button>
                     )}
                 </div>
@@ -299,14 +327,76 @@ const MainContent = ({
 
             {isLoading ? (
                 <div className="loading-state">
-                    <p>Loading...</p>
+                    <p>{isProjectDetailView ? 'Loading project...' : isMyTasksView ? 'Loading my tasks...' : 'Loading projects...'}</p>
                 </div>
-            ) : currentPage === 'projects' ? (
+            ) : isProjectDetailView ? (
+                <div className="project-detail-content">
+                    {/* Project Detail Tabs */}
+                    <div className="project-tabs">
+                        <button 
+                            onClick={() => setActiveTab('tasks')}
+                            className={`tab-button ${activeTab === 'tasks' ? 'active' : ''}`}
+                        >
+                            <FolderIcon /> Tasks ({filteredTasks.length})
+                        </button>
+                        <button 
+                            onClick={() => setActiveTab('members')}
+                            className={`tab-button ${activeTab === 'members' ? 'active' : ''}`}
+                        >
+                            <UsersIcon /> Members
+                        </button>
+                    </div>
+
+                    {/* Tab Content */}
+                    {activeTab === 'tasks' ? (
+                        <div className="tasks-grid">
+                            {filteredTasks.length === 0 ? (
+                                <div className="empty-state">
+                                    <h3>No tasks found</h3>
+                                    <p>Create tasks for this project to get started!</p>
+                                    <button onClick={onNewTask} className="btn btn-primary">
+                                        <PlusIcon /> Create Task
+                                    </button>
+                                </div>
+                            ) : (
+                                filteredTasks.map(task => (
+                                    <TaskCard key={task.id} task={task} />
+                                ))
+                            )}
+                        </div>
+                    ) : (
+                        <MemberManagement 
+                            projectId={currentProject?.id}
+                            currentUserId={user?.id}
+                            isProjectManager={currentProject?.project_manager === user?.id}
+                        />
+                    )}
+                </div>
+            ) : isMyTasksView ? (
+                <div className="tasks-grid">
+                    {filteredTasks.length === 0 ? (
+                        <div className="empty-state">
+                            <h3>No tasks found</h3>
+                            <p>No tasks assigned to you yet.</p>
+                            <button onClick={onNewTask} className="btn btn-primary">
+                                <PlusIcon /> Create Task
+                            </button>
+                        </div>
+                    ) : (
+                        filteredTasks.map(task => (
+                            <TaskCard key={task.id} task={task} />
+                        ))
+                    )}
+                </div>
+            ) : (
                 <div className="projects-grid">
                     {filteredProjects.length === 0 ? (
                         <div className="empty-state">
                             <h3>No projects found</h3>
                             <p>Create your first project to get started!</p>
+                            <button onClick={onNewProject} className="btn btn-primary">
+                                <PlusIcon /> Create Project
+                            </button>
                         </div>
                     ) : (
                         filteredProjects.map(project => (
@@ -315,19 +405,6 @@ const MainContent = ({
                                 project={project} 
                                 onProjectClick={onProjectClick}
                             />
-                        ))
-                    )}
-                </div>
-            ) : (
-                <div className="tasks-grid">
-                    {filteredTasks.length === 0 ? (
-                        <div className="empty-state">
-                            <h3>No tasks found</h3>
-                            <p>Tasks will appear here when assigned to projects.</p>
-                        </div>
-                    ) : (
-                        filteredTasks.map(task => (
-                            <TaskCard key={task.id} task={task} />
                         ))
                     )}
                 </div>
@@ -340,9 +417,15 @@ const MainContent = ({
 export default function ProjectPage() {
     const { user, logout } = useAuth();
     const navigate = useNavigate();
+    const { projectId } = useParams();
     const [theme, setTheme] = useState('dark');
     const [isSidebarCollapsed, setSidebarCollapsed] = useState(false);
-    const [currentPage, setCurrentPage] = useState('projects');
+    
+    // Determine current page based on URL
+    const location = window.location.pathname;
+    const initialPage = location.includes('/my-tasks') ? 'my-tasks' : 'projects';
+    const [currentPage, setCurrentPage] = useState(initialPage);
+    
     const [searchQuery, setSearchQuery] = useState('');
     const [isProjectFormOpen, setIsProjectFormOpen] = useState(false);
     const [isTaskFormOpen, setIsTaskFormOpen] = useState(false);
@@ -350,8 +433,13 @@ export default function ProjectPage() {
     // Data states
     const [projects, setProjects] = useState([]);
     const [tasks, setTasks] = useState([]);
+    const [currentProject, setCurrentProject] = useState(null);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState(null);
+
+    // Determine if we're in project detail view or my tasks view
+    const isProjectDetailView = !!projectId;
+    const isMyTasksView = currentPage === 'my-tasks';
 
     const handleLogout = async () => {
         try {
@@ -398,6 +486,30 @@ export default function ProjectPage() {
         }
     };
 
+    const fetchMyTasks = async () => {
+        try {
+            setIsLoading(true);
+            setError(null);
+            const response = await tasksAPI.getAll();
+            if (response.success) {
+                // Filter tasks assigned to current user
+                const myTasks = (response.data || []).filter(task => 
+                    task.assignee === user?.email || 
+                    task.assigned_to === user?.email ||
+                    task.user_id === user?.id
+                );
+                setTasks(myTasks);
+            } else {
+                setError('Failed to fetch my tasks');
+            }
+        } catch (error) {
+            console.error('Error fetching my tasks:', error);
+            setError(error.message);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
     const handleCreateProject = async (projectData) => {
         try {
             const response = await projectsAPI.create(projectData);
@@ -431,6 +543,11 @@ export default function ProjectPage() {
     const handleNavigate = (page) => {
         setCurrentPage(page);
         setSearchQuery(''); // Clear search when switching pages
+        if (page === 'my-tasks') {
+            navigate('/my-tasks');
+        } else if (page === 'projects') {
+            navigate('/projects');
+        }
     };
 
     const handleNewProject = () => {
@@ -442,8 +559,33 @@ export default function ProjectPage() {
     };
 
     const handleProjectClick = (project) => {
-        // Handle project click - could navigate to project details
-        console.log('Project clicked:', project);
+        navigate(`/projects/${project.id}`);
+    };
+
+    const handleBackToProjects = () => {
+        navigate('/projects');
+    };
+
+    const fetchCurrentProject = async (id) => {
+        try {
+            setIsLoading(true);
+            const response = await projectsAPI.getById(id);
+            if (response.success) {
+                setCurrentProject(response.data);
+                // Also fetch tasks for this project
+                const tasksResponse = await tasksAPI.getByProject(id);
+                if (tasksResponse.success) {
+                    setTasks(tasksResponse.data || []);
+                }
+            } else {
+                setError('Failed to fetch project details');
+            }
+        } catch (error) {
+            console.error('Error fetching project:', error);
+            setError(error.message);
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     useEffect(() => {
@@ -451,13 +593,15 @@ export default function ProjectPage() {
     }, [theme]);
 
     useEffect(() => {
-        // Fetch data when page changes
-        if (currentPage === 'projects') {
+        // Fetch data based on current view
+        if (isProjectDetailView && projectId) {
+            fetchCurrentProject(projectId);
+        } else if (isMyTasksView) {
+            fetchMyTasks();
+        } else {
             fetchProjects();
-        } else if (currentPage === 'tasks') {
-            fetchTasks();
         }
-    }, [currentPage]);
+    }, [isProjectDetailView, projectId, isMyTasksView]);
 
     return (
         <div className="app-container">
@@ -469,11 +613,14 @@ export default function ProjectPage() {
                 user={user}
                 currentPage={currentPage}
                 onNavigate={handleNavigate}
+                showBackButton={isProjectDetailView}
+                onBack={handleBackToProjects}
             />
             <MainContent 
                 currentPage={currentPage}
                 projects={projects}
                 tasks={tasks}
+                currentProject={currentProject}
                 isLoading={isLoading}
                 error={error}
                 onNewProject={handleNewProject}
@@ -481,6 +628,9 @@ export default function ProjectPage() {
                 onProjectClick={handleProjectClick}
                 searchQuery={searchQuery}
                 onSearchChange={setSearchQuery}
+                isProjectDetailView={isProjectDetailView}
+                isMyTasksView={isMyTasksView}
+                user={user}
             />
             <ProjectCreationModal 
                 isOpen={isProjectFormOpen}
@@ -492,6 +642,7 @@ export default function ProjectPage() {
                 onClose={() => setIsTaskFormOpen(false)}
                 onCreateTask={handleCreateTask}
                 projects={projects}
+                currentProject={currentProject}
             />
         </div>
     );

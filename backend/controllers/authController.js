@@ -13,7 +13,9 @@ export const signup = async (req, res, next) => {
         data: {
           first_name: firstName,
           last_name: lastName
-        }
+        },
+        // Skip email confirmation for development
+        emailRedirectTo: undefined
       }
     });
 
@@ -47,7 +49,12 @@ export const signup = async (req, res, next) => {
         access_token: authData.session?.access_token,
         refresh_token: authData.session?.refresh_token,
         user: authData.user,
-        needsVerification: !authData.user?.email_confirmed_at
+        profile: authData.user ? {
+          id: authData.user.id,
+          first_name: firstName,
+          last_name: lastName,
+          email: authData.user.email
+        } : null
       }
     });
   } catch (error) {

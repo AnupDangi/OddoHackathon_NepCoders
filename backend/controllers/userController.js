@@ -71,7 +71,7 @@ export const getAllUsers = async (req, res, next) => {
     
     let query = supabaseAdmin
       .from('profiles')
-      .select('id, first_name, last_name')
+      .select('id, first_name, last_name, avatar_url')
       .order('first_name');
 
     // Add search filter if provided
@@ -92,6 +92,106 @@ export const getAllUsers = async (req, res, next) => {
     res.json({
       success: true,
       data: data || []
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// Search users by email (for invitations)
+export const searchUsersByEmail = async (req, res, next) => {
+  try {
+    const { email } = req.query;
+
+    if (!email) {
+      return res.status(400).json({
+        error: true,
+        message: 'Email query parameter is required'
+      });
+    }
+
+    // Search in auth.users for email (since profiles don't store email)
+    const { data: authUsers, error: authError } = await supabaseAdmin.auth.admin.listUsers();
+    
+    if (authError) {
+      console.error('Auth users fetch error:', authError);
+      return res.status(400).json({
+        error: true,
+        message: 'Failed to search users'
+      });
+    }
+
+    // Filter users by email
+    const matchingUsers = authUsers.users.filter(user => 
+      user.email.toLowerCase().includes(email.toLowerCase())
+    );
+
+    // Get profiles for matching users
+    const userIds = matchingUsers.map(user => user.id);
+    
+    if (userIds.length === 0) {
+      return res.json({
+        success: true,
+        data: []
+      });
+    }
+
+    const { data: profiles, error: profileError } = await supabaseAdmin
+      .from('profiles')
+      .select('id, first_name, last_name, avatar_url')
+      .in('id', userIds);
+
+    if (profileError) {
+      console.error('Profiles fetch error:', profileError);
+      return res.status(400).json({
+        error: true,
+        message: profileError.message
+      });
+    }
+
+    // Combine auth and profile data
+    const combinedData = matchingUsers.map(authUser => {
+      const profile = profiles.find(p => p.id === authUser.id);
+      return {
+        id: authUser.id,
+        email: authUser.email,
+        first_name: profile?.first_name || '',
+        last_name: profile?.last_name || '',
+        avatar_url: profile?.avatar_url || null,
+        full_name: profile ? `${profile.first_name} ${profile.last_name}` : authUser.email
+      };
+    });
+
+    res.json({
+      success: true,
+      data: combinedData
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// Get user profile by ID (for displaying member info)
+export const getUserById = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+
+    const { data: profile, error } = await supabaseAdmin
+      .from('profiles')
+      .select('id, first_name, last_name, avatar_url')
+      .eq('id', id)
+      .single();
+
+    if (error) {
+      return res.status(404).json({
+        error: true,
+        message: 'User not found'
+      });
+    }
+
+    res.json({
+      success: true,
+      data: profile
     });
   } catch (error) {
     next(error);
@@ -134,5 +234,7 @@ export default {
   getProfile,
   updateProfile,
   getAllUsers,
+  searchUsersByEmail,
+  getUserById,
   uploadAvatar
 };

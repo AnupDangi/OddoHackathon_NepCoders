@@ -62,21 +62,9 @@ const RegisterForm = () => {
         <form className="form-container" onSubmit={handleSubmit}>
           <div className="form-header">
             <h2>Create an account</h2>
-            <button
-              type="button"
-              className="form-link"
-              onClick={onLoginClick}
-              style={{
-                background: "none",
-                border: "none",
-                color: "#2563eb",
-                cursor: "pointer",
-                fontSize: "0.875rem",
-                textDecoration: "underline",
-              }}
-            >
+            <Link to="/login" className="form-link">
               log in instead
-            </button>
+            </Link>
           </div>
 
           <input

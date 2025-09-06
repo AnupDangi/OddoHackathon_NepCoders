@@ -6,7 +6,9 @@ import {
   updateProject,
   deleteProject,
   addMember,
-  removeMember
+  removeMember,
+  getProjectMembers,
+  updateMemberRole
 } from '../../../controllers/projectController.js';
 import { authenticateToken } from '../../../middlewares/auth.js';
 import { validateProject } from '../../../middlewares/validation.js';
@@ -25,6 +27,8 @@ router.delete('/:id', deleteProject);
 
 // Member management routes
 router.post('/:id/members', addMember);
+router.get('/:id/members', getProjectMembers);
+router.put('/:id/members/:userId', updateMemberRole);
 router.delete('/:id/members/:userId', removeMember);
 
 // API Documentation
