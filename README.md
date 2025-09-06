@@ -5,6 +5,9 @@
 ![Node.js](https://img.shields.io/badge/Node.js-Express-green.svg)
 ![Supabase](https://img.shields.io/badge/Database-Supabase-green.svg)
 
+## Video LINK 
+https://drive.google.com/drive/folders/1I6M1jyTgl5bg5TORiX8b-GDm_idP7Rp4?usp=sharing
+
 ## 🚀 Overview
 
 SynergySphere is an advanced team collaboration platform designed to act as the central nervous system for teams. Unlike traditional project management tools, SynergySphere focuses on being intelligent, proactive, and supportive — ensuring teams stay organized, aligned, and continuously improving.
