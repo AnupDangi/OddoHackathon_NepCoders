@@ -1,11 +1,16 @@
 import React, { useState } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import './Login.css';
 
 const LoginForm = () => {
+  const navigate = useNavigate();
+  const { login } = useAuth();
   const [formData, setFormData] = useState({
     email: '',
     password: '',
   });
+  const [error, setError] = useState('');
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -15,9 +20,14 @@ const LoginForm = () => {
     }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log('Login submitted:', formData);
+    try {
+      await login(formData.email, formData.password);
+      navigate('/'); // Redirect to projects page after successful login
+    } catch (err) {
+      setError(err.message);
+    }
   };
 
   return (
@@ -42,10 +52,15 @@ const LoginForm = () => {
         >
           <div className="login-form-header">
             <h2>Login into account</h2>
-            <a href="/signup" className="login-form-link">
+            <Link to="/register" className="login-form-link">
               signup instead
-            </a>
+            </Link>
           </div>
+          {error && (
+            <div className="error-message" style={{ color: 'red', marginBottom: '1rem' }}>
+              {error}
+            </div>
+          )}
 
           <input
             type="email"
